@@ -1,16 +1,30 @@
 <?php
+/**
+ * @package li3_save_all
+ */
 
 namespace li3_save_all\extensions\data;
 
+/**
+ * Model extension for saving with related models:
+ *
+ * Usage:
+ * {{{
+ *  // In controller action
+ *  if (($this->request->data) && $post->save($this->request->data, array('with' => array('Author', 'Meta'))) {
+ * }}}
+ *
+ * @see \lithium\data\Model
+ */
 class Model extends \lithium\data\Model {
 
 	public function save($entity, $data, array $options = array()) {
 		// Return home early, we don't need anything else from this class.
-        if (empty($options['with'])) {
-            // Remove this we don't want to save while testing the validation
-            return false;
-            return parent::save($entity, $data, $options);
-        }
+		if (empty($options['with'])) {
+			// Remove this we don't want to save while testing the validation
+			return false;
+			return parent::save($entity, $data, $options);
+		}
 		if (is_string($options['with'])) {
 			$options['with'] = array($options['with']);
 		}
@@ -21,7 +35,7 @@ class Model extends \lithium\data\Model {
 		$fields = array_keys($model::schema());
 
 		// Don't want to reset entity data entirely if $data is null
-        $data = (!$data) ? $entity->data() : $data;
+		$data = (!$data) ? $entity->data() : $data;
 
 		// Strip related model data from $entity
 		$local = array();

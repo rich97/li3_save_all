@@ -18,56 +18,53 @@ class Model extends \lithium\data\Model {
 	 * 
 	 * Use:
 	 * {{{
-	 * // Add this filter at end of model file(s)
-	 * Posts::applyFilter('save', \li3_save_all\extensions\data\Model::save_filter());
-	 * 
 	 * // In controller:
 	 * $post->save($this->request->data, array('with' => array('Author')));
 	 * }}}
 	 *
-	 * @return closure
+	 * @param \lihtuim\data\Entity $entity
+	 * @param array $data
+	 * @param array $options
+	 * @return boolean
 	 */
-	public static function save_filter() {
-		return function($self, $params, $chain) {
-			list($entity, $data, $options) = array($params['entity'], $params['data'], $params['options']);
+	public function save($entity, array $data = array(), array $options = array()) {
+		// Return home early, we don't need anything else from this class.
+		if (empty($options['with'])) {
+			return parent::save($entity, $data, $options);
+		}
+		if (is_string($options['with'])) {
+			$options['with'] = array($options['with']);
+		}
 
-			// Return home early, we don't need anything else from this class.
-			if (empty($options['with'])) {
-				return $chain->next($self, $params, $chain);
+		// Model options
+		$model = $entity->model();
+
+		// Don't want to reset entity data entirely if $data is null
+		$data = (!$data) ? $entity->data() : $data;
+
+		// Set fields ment for root model to it's entity
+		$fields = array_keys($model::schema());
+		$local = array();
+		foreach ($fields as $field) {
+			if (isset($data[$field])) {
+				$local[$field] = $data[$field];
 			}
+		}
+		$entity->set($local);
 
-			if (is_string($options['with'])) {
-				$options['with'] = array($options['with']);
-			}
-
-			// Model options
-			$model = $entity->model();
-			$name = $model::meta('name');
-			$fields = array_keys($model::schema());
-
-			// Don't want to reset entity data entirely if $data is null
-			$data = (!$data) ? $entity->data() : $data;
-
-			// Strip related model data from $entity
-			$local = array();
-			foreach ($fields as $field) {
-				if (isset($data[$field])) {
-					$local[$field] = $data[$field];
-				}
-			}
-			$entity->set($local);
-
-			// Validate inital model 
-			$success = $entity->validates();
-			$with = array();
-			foreach ($options['with'] as $related) {
-				if (isset($data[$related])) {
-					$with[$related] = array();
-					$relatedModel = '\\' . $model::relations($related)->to();
-					$keys = $model::relations($related)->keys();
-					$fk = current($keys);
-					$pk = key($keys);
-					if ($model::relations($related)->type() == 'hasMany') {
+		$with = array();
+		foreach ($options['with'] as $related) {
+			if (isset($data[$related])) {
+				$with[$related] = array();
+				$relationship = $model::relations($related);
+				$relatedModel = $relationship->to();
+				switch ($relationship->type()) {
+					case 'hasOne' :
+					case 'belongsTo' :
+						$entity->$related = $with[$related] = $relatedModel::create();
+						$entity->$related->set($local);
+						break;
+					case 'hasMany' :
 						foreach ($data[$related] as $k => $relatedData) {
 							$local = array();
 							foreach ($relatedData as $field => $value) {
@@ -76,35 +73,59 @@ class Model extends \lithium\data\Model {
 
 							$with[$related][$k] = $relatedModel::create();
 							$with[$related][$k]->set($local);
-							$success = $with[$related][$k]->validates() && $success;
 						}
-						// see Model::bind();
 						$entity->$related = new \lithium\data\collection\RecordSet(array('data' => $with[$related]));
-					}
+						break;
 				}
 			}
+		}
 
-			if (!$success) {
-				$entity->errors($model::errors($entity));
-				return false;
+		if (!$entity->validates()) {
+			$entity->errors($model::errors($entity));
+			return false;
+		}
+		$result = parent::save($entity, $data, $options);
+
+		if (!$result) throw new \Exception ('Save on main failed. Save-all opperation halted.');
+
+		foreach ($with as $related => $relatedEntities) {
+			$keys = $model::relations($related)->keys();
+			$fk = current($keys);
+			$pk = key($keys);
+			foreach ($relatedEntities as $relatedEntity) {
+				$relatedEntity->$fk = $entity->$pk;
+				if (!$relatedEntity->save()) 
+						throw new \Exception ('Save on related failed. Save-all opperation halted.');
 			}
-			$result = $chain->next($self, $params, $chain);
+		}
+		return true;
+	}
 
-			if (!$result) throw new \Exception ('Save on main failed. Save-all opperation halted.');
-
-			foreach ($with as $related => $relatedEntities) {
-				$keys = $model::relations($related)->keys();
-				$fk = current($keys);
-				$pk = key($keys);
-				foreach ($relatedEntities as $relatedEntity) {
-					$relatedEntity->$fk = $entity->$pk;
-					if (!$relatedEntity->save()) 
-							throw new \Exception ('Save on related failed. Save-all opperation halted.');
+	/**
+	 * Check related model for validation errors
+	 *
+	 * @param \lihtuim\data\Entity $entity
+	 * @return boolean 
+	 */
+	public function validates($entity) {
+		$success = parent::validates($entity);
+		$model = $entity->model();
+		foreach ($model::relations() as $related => $relationship) {
+			if (isset($entity->$related)) {
+				switch ($relationship->type()) {
+					case 'hasOne' :
+					case 'belongsTo' :
+						$success = $entity->$related->validates() && $success;
+						break;
+					case 'hasMany' :
+						foreach ($entity->$related as $relatedEntity) {
+							$success = $relatedEntity->validates() && $success;
+						}
+						break;
 				}
 			}
-
-			return true;
-		};
+		}
+		return $success;
 	}
 
 	/**

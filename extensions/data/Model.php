@@ -11,6 +11,9 @@ class Model extends \lithium\data\Model {
             return false;
             return parent::save($entity, $data, $options);
         }
+		if (is_string($options['with'])) {
+			$options['with'] = array($options['with']);
+		}
 
 		// Model options
 		$model = $entity->model();

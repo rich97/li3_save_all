@@ -5,6 +5,8 @@
 
 namespace li3_save_all\extensions\data;
 
+use lithium\data\collection\RecordSet;
+
 /**
  * Model extension for saving with related models:
  *
@@ -74,7 +76,7 @@ class Model extends \lithium\data\Model {
 							$with[$related][$k] = $relatedModel::create();
 							$with[$related][$k]->set($local);
 						}
-						$entity->$related = new \lithium\data\collection\RecordSet(array('data' => $with[$related]));
+						$entity->$related = new RecordSet(array('data' => $with[$related]));
 						break;
 				}
 			}

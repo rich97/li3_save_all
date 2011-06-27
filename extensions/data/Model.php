@@ -17,7 +17,7 @@ class Model extends \lithium\data\Model {
 
 	/**
 	 * Returns a filter closure that can be applied to models that needs a relationship save
-	 * 
+	 *
 	 * Use:
 	 * {{{
 	 * // In controller:
@@ -119,7 +119,7 @@ class Model extends \lithium\data\Model {
 	 * Check related model for validation errors
 	 *
 	 * @param \lihtuim\data\Entity $entity
-	 * @return boolean 
+	 * @return boolean
 	 */
 	public function validates($entity, array $options = array()) {
 		$success = parent::validates($entity, $options);

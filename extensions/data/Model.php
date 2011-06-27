@@ -91,13 +91,25 @@ class Model extends \lithium\data\Model {
 		if (!$result) throw new \Exception ('Save on main failed. Save-all opperation halted.');
 
 		foreach ($with as $related => $relatedEntities) {
-			$keys = $model::relations($related)->keys();
+			$relationship = $model::relations($related);
+			$keys = $relationship->keys();
 			$fk = current($keys);
 			$pk = key($keys);
-			foreach ($relatedEntities as $relatedEntity) {
-				$relatedEntity->$fk = $entity->$pk;
-				if (!$relatedEntity->save()) 
-						throw new \Exception ('Save on related failed. Save-all opperation halted.');
+
+			switch ($relationship->type()) {
+				case 'hasOne' :
+				case 'belongsTo' :
+					$relatedEntities->$fk = $entity->$pk;
+					if (!$relatedEntities->save())
+							throw new \Exception ('Save on related failed. Save-all opperation halted.');
+					break;
+				case 'hasMany' :
+					foreach ($relatedEntities as $relatedEntity) {
+						$relatedEntity->$fk = $entity->$pk;
+						if (!$relatedEntity->save())
+								throw new \Exception ('Save on related failed. Save-all opperation halted.');
+					}
+					break;
 			}
 		}
 		return true;

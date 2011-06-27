@@ -29,7 +29,7 @@ class Model extends \lithium\data\Model {
 	 * @param array $options
 	 * @return boolean
 	 */
-	public function save($entity, array $data = array(), array $options = array()) {
+	public function save($entity, $data = null, array $options = array()) {
 		// Return home early, we don't need anything else from this class.
 		if (empty($options['with'])) {
 			return parent::save($entity, $data, $options);
@@ -109,8 +109,8 @@ class Model extends \lithium\data\Model {
 	 * @param \lihtuim\data\Entity $entity
 	 * @return boolean 
 	 */
-	public function validates($entity) {
-		$success = parent::validates($entity);
+	public function validates($entity, array $options = array()) {
+		$success = parent::validates($entity, $options);
 		$model = $entity->model();
 		foreach ($model::relations() as $related => $relationship) {
 			if (isset($entity->$related)) {

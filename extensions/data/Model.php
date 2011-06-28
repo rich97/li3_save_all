@@ -63,8 +63,8 @@ class Model extends \lithium\data\Model {
 				switch ($relationship->type()) {
 					case 'hasOne' :
 					case 'belongsTo' :
-						$entity->$related = $with[$related] = $relatedModel::create();
-						$entity->$related->set($local);
+						$entity->{$related} = $with[$related] = $relatedModel::create();
+						$entity->{$related}->set($local);
 						break;
 					case 'hasMany' :
 						foreach ($data[$related] as $k => $relatedData) {
@@ -76,7 +76,7 @@ class Model extends \lithium\data\Model {
 							$with[$related][$k] = $relatedModel::create();
 							$with[$related][$k]->set($local);
 						}
-						$entity->$related = new RecordSet(array('data' => $with[$related]));
+						$entity->{$related} = new RecordSet(array('data' => $with[$related]));
 						break;
 				}
 			}
@@ -125,14 +125,14 @@ class Model extends \lithium\data\Model {
 		$success = parent::validates($entity, $options);
 		$model = $entity->model();
 		foreach ($model::relations() as $related => $relationship) {
-			if (!empty($entity->$related) && is_object($entity->$related)) {
+			if (!empty($entity->{$related}) && is_object($entity->{$related})) {
 				switch ($relationship->type()) {
 					case 'hasOne' :
 					case 'belongsTo' :
-						$success = $entity->$related->validates() && $success;
+						$success = $entity->{$related}->validates() && $success;
 						break;
 					case 'hasMany' :
-						foreach ($entity->$related as $relatedEntity) {
+						foreach ($entity->{$related} as $relatedEntity) {
 							$success = $relatedEntity->validates() && $success;
 						}
 						break;

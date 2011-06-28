@@ -65,6 +65,7 @@ class Model extends \lithium\data\Model {
 					case 'belongsTo' :
 						$relatedData = !empty($data[$related]) ? $data[$related] : array();
 						$entity->{$related} = $with[$related] = $relatedModel::create($relatedData);
+						break;
 					case 'hasMany' :
 						foreach ($data[$related] as $k => $relatedData) {
 							$local = array();

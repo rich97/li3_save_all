@@ -125,7 +125,7 @@ class Model extends \lithium\data\Model {
 		$success = parent::validates($entity, $options);
 		$model = $entity->model();
 		foreach ($model::relations() as $related => $relationship) {
-			if (isset($entity->$related)) {
+			if (!empty($entity->$related) && is_object($entity->$related)) {
 				switch ($relationship->type()) {
 					case 'hasOne' :
 					case 'belongsTo' :

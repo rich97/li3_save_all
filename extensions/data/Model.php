@@ -63,9 +63,8 @@ class Model extends \lithium\data\Model {
 				switch ($relationship->type()) {
 					case 'hasOne' :
 					case 'belongsTo' :
-						$entity->{$related} = $with[$related] = $relatedModel::create();
-						$entity->{$related}->set($local);
-						break;
+						$relatedData = !empty($data[$related]) ? $data[$related] : array();
+						$entity->{$related} = $with[$related] = $relatedModel::create($relatedData);
 					case 'hasMany' :
 						foreach ($data[$related] as $k => $relatedData) {
 							$local = array();
@@ -151,7 +150,6 @@ class Model extends \lithium\data\Model {
 	public static function errors($entity) {
 		$errors = $entity->errors();
 		foreach (static::relations() as $related => $relationship) {
-
 			if (!($entity->{$related}) || !($relErrors = $entity->{$related}->errors())) {
 				continue;
 			}

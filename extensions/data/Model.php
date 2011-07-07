@@ -61,12 +61,12 @@ class Model extends \lithium\data\Model {
 				$relationship = $model::relations($related);
 				$relatedModel = $relationship->to();
 				switch ($relationship->type()) {
-					case 'hasOne' :
-					case 'belongsTo' :
+					case 'hasOne':
+					case 'belongsTo':
 						$relatedData = !empty($data[$related]) ? $data[$related] : array();
 						$entity->{$related} = $with[$related] = $relatedModel::create($relatedData);
 						break;
-					case 'hasMany' :
+					case 'hasMany':
 						foreach ($data[$related] as $k => $relatedData) {
 							$local = array();
 							foreach ($relatedData as $field => $value) {
@@ -97,17 +97,17 @@ class Model extends \lithium\data\Model {
 			$pk = key($keys);
 
 			switch ($relationship->type()) {
-				case 'hasOne' :
-				case 'belongsTo' :
+				case 'hasOne':
+				case 'belongsTo':
 					$relatedEntities->$fk = $entity->$pk;
 					if (!$relatedEntities->save())
-							throw new \Exception ('Save on related failed. Save-all opperation halted.');
+						throw new \Exception ('Save on related failed. Save-all opperation halted.');
 					break;
-				case 'hasMany' :
+				case 'hasMany':
 					foreach ($relatedEntities as $relatedEntity) {
 						$relatedEntity->$fk = $entity->$pk;
 						if (!$relatedEntity->save())
-								throw new \Exception ('Save on related failed. Save-all opperation halted.');
+							throw new \Exception ('Save on related failed. Save-all opperation halted.');
 					}
 					break;
 			}
